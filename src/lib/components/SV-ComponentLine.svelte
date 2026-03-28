@@ -23,7 +23,31 @@
 </script>
 
 <g class="sv-component-lines pointer-events-none">
-	<!-- Vertical Component Line (to X-axis) -->
+	<!-- X-Axis Solid Component (The "Shadow" on X) -->
+	<line
+		x1={originX}
+		y1={originY}
+		x2={tipX}
+		y2={originY}
+		stroke={color}
+		stroke-width="3.5"
+		stroke-opacity="0.8"
+		stroke-linecap="round"
+	/>
+
+	<!-- Y-Axis Solid Component (The "Shadow" on Y) -->
+	<line
+		x1={originX}
+		y1={originY}
+		x2={originX}
+		y2={tipY}
+		stroke={color}
+		stroke-width="3.5"
+		stroke-opacity="0.4"
+		stroke-linecap="round"
+	/>
+
+	<!-- Vertical Projection (to Tip) -->
 	<line
 		x1={tipX}
 		y1={tipY}
@@ -35,7 +59,7 @@
 		stroke-opacity="0.6"
 	/>
 
-	<!-- Horizontal Component Line (to Y-axis) -->
+	<!-- Horizontal Projection (to Tip) -->
 	<line
 		x1={tipX}
 		y1={tipY}

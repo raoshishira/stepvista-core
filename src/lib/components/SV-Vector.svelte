@@ -24,7 +24,10 @@
 		initialAngle = 0,
 		showComponents = false,
 		showTooltip = true,
-		showOriginHandle = false
+		showOriginHandle = false,
+		disableTip = false,
+		disableOrigin = false,
+		bounds = { minX: 0, minY: 0, maxX: 1000, maxY: 600 }
 	} = $props();
 
 	// Interaction State
@@ -45,7 +48,7 @@
 		}
 
 		console.log(
-			'%c @stepvista/core · SV-Vector v1.2.3 ',
+			'%c @stepvista/core · SV-Vector v1.2.4 ',
 			'background: #0f172a; color: #10b981; font-weight: bold; padding: 4px 10px; border-radius: 4px;'
 		);
 	});
@@ -77,6 +80,8 @@
 	}
 
 	function handleStart(type: 'tip' | 'origin', e: MouseEvent | TouchEvent) {
+		if (type === 'tip' && disableTip) return;
+		if (type === 'origin' && disableOrigin) return;
 		e.stopPropagation();
 		dragType = type;
 	}
@@ -87,12 +92,16 @@
 		const coords = translateCoords(event);
 		if (!coords) return;
 
+		// Interaction Clamping (Board Guardrails)
+		const clampedX = Math.max(bounds.minX, Math.min(bounds.maxX, coords.x));
+		const clampedY = Math.max(bounds.minY, Math.min(bounds.maxY, coords.y));
+
 		if (dragType === 'tip') {
-			relativeX = snap(coords.x - originX, step);
-			relativeY = snap(coords.y - originY, step);
+			relativeX = snap(clampedX - originX, step);
+			relativeY = snap(clampedY - originY, step);
 		} else if (dragType === 'origin') {
-			originX = snap(coords.x, step);
-			originY = snap(coords.y, step);
+			originX = snap(clampedX, step);
+			originY = snap(clampedY, step);
 		}
 	}
 
@@ -101,6 +110,8 @@
 	}
 
 	function handleKeyDown(type: 'tip' | 'origin', e: KeyboardEvent) {
+		if (type === 'tip' && disableTip) return;
+		if (type === 'origin' && disableOrigin) return;
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
 			dragType = dragType === type ? null : type;
@@ -202,23 +213,27 @@
 		/>
 	{/if}
 
-	<!-- Tooltip (Vanilla CSS for Robust Visibility) -->
-	{#if showTooltip}
+	<!-- Physics Tooltip (Magnitude & Angle) -->
+	{#if showTooltip && !dragType}
 		<foreignObject 
-			x={originX + relativeX + 15} 
-			y={originY + relativeY - 50} 
-			width="130" height="90" 
-			style="pointer-events: none;"
+			x={relativeX + originX + 15} 
+			y={relativeY + originY + 15} 
+			width="140" 
+			height="85"
+			class="pointer-events-none"
 		>
-			<div class="sv-tooltip">
-				<span class="sv-header">{label}</span>
-				<div class="sv-data">
-					<span class="sv-label">Magnitude</span>
-					<span class="sv-val mag">{mag}</span>
+			<div class="p-4 rounded-xl shadow-2xl border transition-all duration-300 animate-in fade-in zoom-in-95"
+				 style="background: white; border-color: #e2e8f0;">
+				<div class="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400 mb-2 border-b border-slate-50 pb-1">{label}</div>
+				
+				<div class="flex justify-between items-center mb-1">
+					<span class="text-[9px] font-bold text-slate-500 uppercase">Mag</span>
+					<span class="text-xs font-black" style="color: {color}">{mag}</span>
 				</div>
-				<div class="sv-data">
-					<span class="sv-label">Angle</span>
-					<span class="sv-val angle">{angle}°</span>
+				
+				<div class="flex justify-between items-center">
+					<span class="text-[9px] font-bold text-slate-500 uppercase">Angle</span>
+					<span class="text-xs font-black text-emerald-500">{angle}°</span>
 				</div>
 			</div>
 		</foreignObject>

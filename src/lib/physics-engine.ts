@@ -48,12 +48,12 @@ export function getMagnitude(v: Vector): number {
 }
 
 /**
- * Returns the angle of the vector in degrees (0 to 360)
+ * Get internal angle in degrees (0-360), CCW from positive X-axis (Mathematical Standard).
  */
-export function getAngle(v: Vector): number {
-    const radians = Math.atan2(v.y, v.x);
-    let degrees = radians * (180 / Math.PI);
-    return degrees < 0 ? degrees + 360 : degrees;
+export function getAngle(pos: { x: number; y: number }): number {
+  // Invert Y because SVG Y grows down, but mathematical Y grows up
+  const angle = Math.atan2(-pos.y, pos.x) * (180 / Math.PI);
+  return (angle + 360) % 360;
 }
 
 /**
