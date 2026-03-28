@@ -1,20 +1,20 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getMagnitude, getAngle, toRecordFormat, snap } from '$lib/physics-engine';
+	import { getMagnitude, getAngle, toRecordFormat, snap } from '../physics-engine.js';
+	import SVComponentLine from './SV-ComponentLine.svelte';
 
 	/**
-	 * @typedef {Object} Props
-	 * @property {number} [originX=0] - Starting X coordinate
-	 * @property {number} [originY=0] - Starting Y coordinate
-	 * @property {string} [color='#3b82f6'] - Vector color (hex)
-	 * @property {string} [label='Vector'] - Display label
-	 * @property {number} [step=10] - Snapping increment
-	 * @property {number} [initialMag=100] - Starting magnitude
-	 * @property {number} [initialAngle=0] - Starting angle in degrees
-	 * @property {(data: { x: number, y: number, mag: number, angle: number }) => void} [onUpdate] - Update callback
+	 * SV-Vector — Interactive 2D physics vector component.
+	 * 
+	 * @prop {Object} pos - Bindable {x, y} relative position of the vector tip.
+	 * @prop {number} mag - Bindable magnitude (calculated for lab manuals).
+	 * @prop {number} angle - Bindable angle in degrees (0-360).
 	 */
 
 	let {
+		pos = $bindable({ x: 0, y: 0 }),
+		mag = $bindable(0),
+		angle = $bindable(0),
 		originX = 0,
 		originY = 0,
 		color = '#3b82f6',
@@ -22,85 +22,74 @@
 		step = 10,
 		initialMag = 100,
 		initialAngle = 0,
-		onUpdate = () => {}
+		showComponents = false
 	} = $props();
 
-	// Tip relative position state using Svelte 5 runes
-	let relativeX = $state(0);
-	let relativeY = $state(0);
-	
-	// Initialize and react to prop changes for initial position
-	$effect(() => {
-		relativeX = initialMag * Math.cos((initialAngle * Math.PI) / 180);
-		relativeY = initialMag * Math.sin((initialAngle * Math.PI) / 180);
-	});
-	
-	let tipX = $derived(originX + relativeX);
-	let tipY = $derived(originY + relativeY);
-
+	// Interaction State
 	let isDragging = $state(false);
 	let groupRef: SVGGElement | null = $state(null);
 
-	// Derived physics values
-	let mag = $derived(toRecordFormat(getMagnitude({ x: relativeX, y: relativeY })));
-	let angle = $derived(toRecordFormat(getAngle({ x: relativeX, y: relativeY })));
-
-	// Effect to notify parent on change (Proprietary Separation)
-	$effect(() => {
-		onUpdate({ x: tipX, y: tipY, mag, angle });
-	});
+	// Tip coordinates
+	let relativeX = $state(0);
+	let relativeY = $state(0);
 
 	onMount(() => {
-		// The StepVista "Dye": Signature and Telemetry
-		// Consistency with SV-Grid console footprint
-		console.log(
-			'%c StepVista: SV-Vector | v1.0.0 ',
-			'background: #1e293b; color: #38bdf8; font-weight: bold; padding: 4px 8px; border-radius: 4px; border: 1px solid #334155;'
-		);
+		if (pos.x === 0 && pos.y === 0) {
+			relativeX = initialMag * Math.cos((initialAngle * Math.PI) / 180);
+			relativeY = initialMag * Math.sin((initialAngle * Math.PI) / 180);
+		} else {
+			relativeX = pos.x;
+			relativeY = pos.y;
+		}
 
-		// Telemetry logic (Mocked for @stepvista/core repository)
-		const telemetry = async () => {
-			try {
-				await fetch('https://telemetry.stepvista.com/log', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						component: 'SV-Vector',
-						label,
-						timestamp: new Date().toISOString()
-					})
-				});
-			} catch (e) {
-				// Silent fail for physics sandbox environments (Offline usage support)
-			}
-		};
-		telemetry();
+		console.log(
+			'%c @stepvista/core · SV-Vector v1.2.2 ',
+			'background: #0f172a; color: #10b981; font-weight: bold; padding: 4px 10px; border-radius: 4px;'
+		);
 	});
 
-	function handleMove(e: MouseEvent | TouchEvent) {
-		if (!isDragging || !groupRef) return;
+	// Recompute physical stats
+	$effect(() => {
+		pos = { x: relativeX, y: relativeY };
+		mag = toRecordFormat(getMagnitude({ x: relativeX, y: relativeY }));
+		angle = toRecordFormat(getAngle({ x: relativeX, y: relativeY }));
+	});
 
+	function translateCoords(event: MouseEvent | TouchEvent) {
+		if (!groupRef) return null;
 		const svg = groupRef.ownerSVGElement;
-		if (!svg) return;
+		if (!svg) return null;
 
-		const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-		const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+		const clientX = 'touches' in event ? event.touches[0].clientX : (event as MouseEvent).clientX;
+		const clientY = 'touches' in event ? event.touches[0].clientY : (event as MouseEvent).clientY;
 
-		// Correcting coordinates to SVG space for precision snapping
 		const point = svg.createSVGPoint();
 		point.x = clientX;
 		point.y = clientY;
+
 		const ctm = svg.getScreenCTM();
-		if (!ctm) return;
+		if (!ctm) return null;
 		
 		const { x, y } = point.matrixTransform(ctm.inverse());
-
-		// Update relative position with snap (relative to origin)
-		relativeX = snap(x - originX, step);
-		relativeY = snap(y - originY, step);
+		return { x, y };
 	}
 
-	function stopDragging() {
+	function handleStart(e: MouseEvent | TouchEvent) {
+		e.stopPropagation();
+		isDragging = true;
+	}
+
+	function handleMove(event: MouseEvent | TouchEvent) {
+		if (!isDragging) return;
+
+		const coords = translateCoords(event);
+		if (!coords) return;
+
+		relativeX = snap(coords.x - originX, step);
+		relativeY = snap(coords.y - originY, step);
+	}
+
+	function handleEnd() {
 		isDragging = false;
 	}
 
@@ -114,13 +103,12 @@
 
 <svelte:window 
 	onmousemove={handleMove} 
-	onmouseup={stopDragging} 
+	onmouseup={handleEnd} 
 	ontouchmove={handleMove} 
-	ontouchend={stopDragging} 
+	ontouchend={handleEnd} 
 />
 
 <g bind:this={groupRef} class="sv-vector select-none" style="font-family: 'Inter', sans-serif;">
-	<!-- Marker Definition for the Arrowhead -->
 	<defs>
 		<marker
 			id="arrowhead-{color.replace('#', '')}"
@@ -134,64 +122,76 @@
 		</marker>
 	</defs>
 
-	<!-- Main Vector Line -->
+	<!-- Component Visualization (Dashed Projections) -->
+	{#if showComponents}
+		<SVComponentLine 
+			{originX} 
+			{originY} 
+			x={relativeX} 
+			y={relativeY} 
+			{color} 
+		/>
+	{/if}
+
 	<line
 		x1={originX}
 		y1={originY}
-		x2={tipX}
-		y2={tipY}
+		x2={originX + relativeX}
+		y2={originY + relativeY}
 		stroke={color}
 		stroke-width="3"
 		stroke-linecap="round"
 		marker-end="url(#arrowhead-{color.replace('#', '')})"
 	/>
 
-	<!-- Invisible Hit Area (Large stroke for easier interaction on mobile) -->
+	<!-- Interaction Surfaces -->
 	<line
-		x1={originX}
-		y1={originY}
-		x2={tipX}
-		y2={tipY}
+		x1={originX} y1={originY} 
+		x2={originX + relativeX} y2={originY + relativeY}
 		stroke="transparent"
 		stroke-width="24"
-		class="cursor-move pointer-events-auto"
+		style="pointer-events: auto; cursor: move;"
 		role="button"
 		tabindex="0"
-		aria-label="Drag to resize vector"
-		onmousedown={() => (isDragging = true)}
-		ontouchstart={() => (isDragging = true)}
+		aria-label="Drag vector body"
+		onmousedown={handleStart}
+		ontouchstart={handleStart}
 		onkeydown={handleKeyDown}
 	/>
 
-	<!-- Tip Handle (Interactive Point) -->
 	<circle
-		cx={tipX}
-		cy={tipY}
+		cx={originX + relativeX}
+		cy={originY + relativeY}
 		r="8"
 		fill={color}
 		fill-opacity="0.3"
 		stroke={color}
 		stroke-width="2"
-		class="cursor-move hover:fill-opacity-60 transition-all duration-200 pointer-events-auto"
+		style="pointer-events: auto; cursor: move;"
 		role="button"
 		tabindex="0"
-		aria-label="Vector Tip Handle"
-		onmousedown={() => (isDragging = true)}
-		ontouchstart={() => (isDragging = true)}
+		aria-label="Vector tip handle"
+		onmousedown={handleStart}
+		ontouchstart={handleStart}
 		onkeydown={handleKeyDown}
 	/>
 
-	<!-- Label / Physics Tooltip (Academic Aesthetic) -->
-	<foreignObject x={tipX + 15} y={tipY - 50} width="120" height="85" class="pointer-events-none">
-		<div class="flex flex-col bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-2.5 rounded-lg shadow-2xl text-white text-[10px]">
-			<span class="font-bold text-slate-400 uppercase tracking-widest text-[8px] mb-1.5 border-b border-slate-700/50 pb-1">{label}</span>
-			<div class="flex justify-between items-center gap-2 mb-0.5">
-				<span class="text-slate-500 font-medium text-[9px]">Magnitude</span>
-				<span class="font-mono text-sky-400 font-bold">{mag}</span>
+	<!-- Tooltip (Vanilla CSS for Robust Visibility) -->
+	<foreignObject 
+		x={originX + relativeX + 15} 
+		y={originY + relativeY - 50} 
+		width="130" height="90" 
+		style="pointer-events: none;"
+	>
+		<div class="sv-tooltip">
+			<span class="sv-header">{label}</span>
+			<div class="sv-data">
+				<span class="sv-label">Magnitude</span>
+				<span class="sv-val mag">{mag}</span>
 			</div>
-			<div class="flex justify-between items-center gap-2">
-				<span class="text-slate-500 font-medium text-[9px]">Angle</span>
-				<span class="font-mono text-emerald-400 font-bold">{angle}°</span>
+			<div class="sv-data">
+				<span class="sv-label">Angle</span>
+				<span class="sv-val angle">{angle}°</span>
 			</div>
 		</div>
 	</foreignObject>
@@ -201,7 +201,61 @@
 	.sv-vector {
 		pointer-events: none;
 	}
-	.cursor-move {
-		cursor: move;
+	/* Ensure direct interaction elements are always enabled */
+	.sv-vector line, .sv-vector circle {
+		pointer-events: auto;
+	}
+
+	.sv-tooltip {
+		display: flex;
+		flex-direction: column;
+		background: #0f172a; /* Explicit dark slate background for white text */
+		background: rgba(15, 23, 42, 0.95);
+		backdrop-filter: blur(4px);
+		border: 1px solid rgba(51, 65, 85, 0.5);
+		padding: 8px 10px;
+		border-radius: 6px;
+		color: #f8fafc; /* Safe white text color */
+		font-family: 'Inter', sans-serif;
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+	}
+
+	.sv-header {
+		font-weight: 700;
+		color: #94a3b8;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		font-size: 8px;
+		margin-bottom: 6px;
+		border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+		padding-bottom: 4px;
+	}
+
+	.sv-data {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 2px;
+	}
+
+	.sv-label {
+		color: #64748b;
+		font-weight: 500;
+		font-size: 9px;
+	}
+
+	.sv-val {
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+		font-weight: 700;
+		font-size: 10px;
+	}
+
+	.sv-val.mag {
+		color: #38bdf8;
+	}
+
+	.sv-val.angle {
+		color: #10b981;
 	}
 </style>

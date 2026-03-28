@@ -1,11 +1,22 @@
 {
-	"name": "stepvista-core",
+	"name": "@stepvista/core",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
+	"main": "./src/lib/index.ts",
+	"module": "./src/lib/index.ts",
+	"svelte": "./src/lib/index.ts",
+	"exports": {
+		".": {
+			"types": "./src/lib/index.ts",
+			"svelte": "./src/lib/index.ts",
+			"default": "./src/lib/index.ts"
+		}
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
+		"package": "svelte-package",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -13,9 +24,13 @@
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run"
 	},
+	"peerDependencies": {
+		"svelte": ">=5.0.0"
+	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/kit": "^2.50.2",
+		"@sveltejs/package": "^2.5.7",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tailwindcss/vite": "^4.1.18",
 		"@vitest/browser-playwright": "^4.1.0",
