@@ -15,18 +15,20 @@
 		pos = $bindable({ x: 0, y: 0 }),
 		mag = $bindable(0),
 		angle = $bindable(0),
-		originX = 0,
-		originY = 0,
+		originX = $bindable(400),
+		originY = $bindable(225),
 		color = '#3b82f6',
 		label = 'Vector',
 		step = 10,
 		initialMag = 100,
 		initialAngle = 0,
-		showComponents = false
+		showComponents = false,
+		showTooltip = true,
+		showOriginHandle = false
 	} = $props();
 
 	// Interaction State
-	let isDragging = $state(false);
+	let dragType: 'tip' | 'origin' | null = $state(null);
 	let groupRef: SVGGElement | null = $state(null);
 
 	// Tip coordinates
@@ -43,7 +45,7 @@
 		}
 
 		console.log(
-			'%c @stepvista/core · SV-Vector v1.2.2 ',
+			'%c @stepvista/core · SV-Vector v1.2.3 ',
 			'background: #0f172a; color: #10b981; font-weight: bold; padding: 4px 10px; border-radius: 4px;'
 		);
 	});
@@ -74,29 +76,34 @@
 		return { x, y };
 	}
 
-	function handleStart(e: MouseEvent | TouchEvent) {
+	function handleStart(type: 'tip' | 'origin', e: MouseEvent | TouchEvent) {
 		e.stopPropagation();
-		isDragging = true;
+		dragType = type;
 	}
 
 	function handleMove(event: MouseEvent | TouchEvent) {
-		if (!isDragging) return;
+		if (!dragType) return;
 
 		const coords = translateCoords(event);
 		if (!coords) return;
 
-		relativeX = snap(coords.x - originX, step);
-		relativeY = snap(coords.y - originY, step);
+		if (dragType === 'tip') {
+			relativeX = snap(coords.x - originX, step);
+			relativeY = snap(coords.y - originY, step);
+		} else if (dragType === 'origin') {
+			originX = snap(coords.x, step);
+			originY = snap(coords.y, step);
+		}
 	}
 
 	function handleEnd() {
-		isDragging = false;
+		dragType = null;
 	}
 
-	function handleKeyDown(e: KeyboardEvent) {
+	function handleKeyDown(type: 'tip' | 'origin', e: KeyboardEvent) {
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
-			isDragging = !isDragging;
+			dragType = dragType === type ? null : type;
 		}
 	}
 </script>
@@ -154,9 +161,8 @@
 		role="button"
 		tabindex="0"
 		aria-label="Drag vector body"
-		onmousedown={handleStart}
-		ontouchstart={handleStart}
-		onkeydown={handleKeyDown}
+		onmousedown={(e) => handleStart('tip', e)}
+		ontouchstart={(e) => handleStart('tip', e)}
 	/>
 
 	<circle
@@ -171,30 +177,52 @@
 		role="button"
 		tabindex="0"
 		aria-label="Vector tip handle"
-		onmousedown={handleStart}
-		ontouchstart={handleStart}
-		onkeydown={handleKeyDown}
+		onmousedown={(e) => handleStart('tip', e)}
+		ontouchstart={(e) => handleStart('tip', e)}
+		onkeydown={(e) => handleKeyDown('tip', e)}
 	/>
 
+	{#if showOriginHandle}
+		<circle
+			cx={originX}
+			cy={originY}
+			r="12"
+			fill="#ffffff"
+			fill-opacity="0.6"
+			stroke="#94a3b8"
+			stroke-width="1.5"
+			stroke-dasharray="2,2"
+			style="pointer-events: auto; cursor: crosshair;"
+			role="button"
+			tabindex="0"
+			aria-label="Vector origin handle"
+			onmousedown={(e) => handleStart('origin', e)}
+			ontouchstart={(e) => handleStart('origin', e)}
+			onkeydown={(e) => handleKeyDown('origin', e)}
+		/>
+	{/if}
+
 	<!-- Tooltip (Vanilla CSS for Robust Visibility) -->
-	<foreignObject 
-		x={originX + relativeX + 15} 
-		y={originY + relativeY - 50} 
-		width="130" height="90" 
-		style="pointer-events: none;"
-	>
-		<div class="sv-tooltip">
-			<span class="sv-header">{label}</span>
-			<div class="sv-data">
-				<span class="sv-label">Magnitude</span>
-				<span class="sv-val mag">{mag}</span>
+	{#if showTooltip}
+		<foreignObject 
+			x={originX + relativeX + 15} 
+			y={originY + relativeY - 50} 
+			width="130" height="90" 
+			style="pointer-events: none;"
+		>
+			<div class="sv-tooltip">
+				<span class="sv-header">{label}</span>
+				<div class="sv-data">
+					<span class="sv-label">Magnitude</span>
+					<span class="sv-val mag">{mag}</span>
+				</div>
+				<div class="sv-data">
+					<span class="sv-label">Angle</span>
+					<span class="sv-val angle">{angle}°</span>
+				</div>
 			</div>
-			<div class="sv-data">
-				<span class="sv-label">Angle</span>
-				<span class="sv-val angle">{angle}°</span>
-			</div>
-		</div>
-	</foreignObject>
+		</foreignObject>
+	{/if}
 </g>
 
 <style>
