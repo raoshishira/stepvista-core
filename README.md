@@ -1,2 +1,79 @@
-# stepvista-core
-High-performance Svelte/SVG Physics simulation engine for StepVista. [AGPL-3.0]
+# StepVista Core (`@stepvista/core`)
+
+> **High-performance interactive physics simulation engine for browser-based learning.**
+
+StepVista Core is a library of open-source components designed to transform static educational content into active, discovery-based experiences. It provides the fundamental building blocks for creating high-fidelity physics simulations that run smoothly in low-bandwidth environments.
+
+## 🔬 Core Philosophy
+
+This library is built on the principle of **Guided Discovery**:
+- **Interactive First:** Students learn by manipulating variables rather than watching videos.
+- **Conceptual Accuracy:** Math and visual logic are aligned with standard university-level physics principles.
+- **Lightweight & Accessible:** SVG-based components optimized for mobile devices and classroom smart boards.
+
+## 🏗️ Technical Stack
+
+- **Framework:** [Svelte 5](https://svelte.dev/) (utilizing Runes for reactive state management).
+- **Rendering:** Resolution-independent SVG.
+- **Styling:** Tailwind CSS.
+- **Math:** Custom `physics-engine` with high-precision snapping and decimal formatting for laboratory records.
+
+## 📦 Components
+
+| Ingredient | Purpose |
+| :--- | :--- |
+| `SV-Grid` | A responsive Cartesian coordinate system with snappable grid lines. |
+| `SV-Vector` | Draggable arrows with real-time magnitude and angular calculation. |
+| `Physics-Engine` | High-precision utilities for vector operations and kinematics. |
+
+## 🚀 Installation
+
+```bash
+npm install @stepvista/core
+```
+
+## ⚖️ Licensing
+
+Licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. 
+
+If you use this engine to build public educational tools, the AGPL requires that you share your source code with the community. 
+
+---
+
+## 🛠️ Developer Guide
+
+### 1. Initial Setup
+```bash
+npm install
+```
+
+### 2. Local Development
+Preview components and test logic in the local workspace:
+```bash
+npm run dev
+```
+
+### 3. Linking to External Projects
+To use this library locally in your platform repository:
+
+**In `stepvista-core`:**
+```bash
+npm link
+```
+
+**In your platform repo:**
+```bash
+npm link @stepvista/core
+```
+
+### 4. Build Process
+```bash
+npm run build
+```
+*The build preserves internal attribution signatures while optimizing SVG performance.*
+
+---
+
+**Built by Shishira Rao H A.**
+
+---
