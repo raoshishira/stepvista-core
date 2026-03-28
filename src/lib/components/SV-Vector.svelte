@@ -13,6 +13,8 @@
 
 	let {
 		pos = $bindable({ x: 0, y: 0 }),
+		x = $bindable(0),
+		y = $bindable(0),
 		mag = $bindable(0),
 		angle = $bindable(0),
 		originX = $bindable(400),
@@ -27,6 +29,7 @@
 		showOriginHandle = false,
 		disableTip = false,
 		disableOrigin = false,
+		width = 3,
 		bounds = { minX: 0, minY: 0, maxX: 1000, maxY: 600 }
 	} = $props();
 
@@ -34,9 +37,26 @@
 	let dragType: 'tip' | 'origin' | null = $state(null);
 	let groupRef: SVGGElement | null = $state(null);
 
-	// Tip coordinates
-	let relativeX = $state(0);
-	let relativeY = $state(0);
+	// Tip coordinates (Source of Truth)
+	let relativeX = $state(x || pos.x || 0);
+	let relativeY = $state(y || pos.y || 0);
+
+	// Multi-way Synchronization
+	$effect(() => {
+		// Sync internal state to props
+		x = relativeX;
+		y = relativeY;
+		pos = { x: relativeX, y: relativeY };
+		
+		mag = toRecordFormat(getMagnitude({ x: relativeX, y: relativeY }));
+		angle = toRecordFormat(getAngle({ x: relativeX, y: relativeY }));
+	});
+
+	// External propulsion (if props change from outside)
+	$effect(() => {
+		relativeX = x;
+		relativeY = y;
+	});
 
 	onMount(() => {
 		if (pos.x === 0 && pos.y === 0) {
@@ -51,13 +71,6 @@
 			'%c @stepvista/core · SV-Vector v1.2.4 ',
 			'background: #0f172a; color: #10b981; font-weight: bold; padding: 4px 10px; border-radius: 4px;'
 		);
-	});
-
-	// Recompute physical stats
-	$effect(() => {
-		pos = { x: relativeX, y: relativeY };
-		mag = toRecordFormat(getMagnitude({ x: relativeX, y: relativeY }));
-		angle = toRecordFormat(getAngle({ x: relativeX, y: relativeY }));
 	});
 
 	function translateCoords(event: MouseEvent | TouchEvent) {
@@ -157,7 +170,7 @@
 		x2={originX + relativeX}
 		y2={originY + relativeY}
 		stroke={color}
-		stroke-width="3"
+		stroke-width={width}
 		stroke-linecap="round"
 		marker-end="url(#arrowhead-{color.replace('#', '')})"
 	/>
@@ -213,31 +226,6 @@
 		/>
 	{/if}
 
-	<!-- Physics Tooltip (Magnitude & Angle) -->
-	{#if showTooltip && !dragType}
-		<foreignObject 
-			x={relativeX + originX + 15} 
-			y={relativeY + originY + 15} 
-			width="140" 
-			height="85"
-			class="pointer-events-none"
-		>
-			<div class="p-4 rounded-xl shadow-2xl border transition-all duration-300 animate-in fade-in zoom-in-95"
-				 style="background: white; border-color: #e2e8f0;">
-				<div class="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400 mb-2 border-b border-slate-50 pb-1">{label}</div>
-				
-				<div class="flex justify-between items-center mb-1">
-					<span class="text-[9px] font-bold text-slate-500 uppercase">Mag</span>
-					<span class="text-xs font-black" style="color: {color}">{mag}</span>
-				</div>
-				
-				<div class="flex justify-between items-center">
-					<span class="text-[9px] font-bold text-slate-500 uppercase">Angle</span>
-					<span class="text-xs font-black text-emerald-500">{angle}°</span>
-				</div>
-			</div>
-		</foreignObject>
-	{/if}
 </g>
 
 <style>
@@ -247,58 +235,5 @@
 	/* Ensure direct interaction elements are always enabled */
 	.sv-vector line, .sv-vector circle {
 		pointer-events: auto;
-	}
-
-	.sv-tooltip {
-		display: flex;
-		flex-direction: column;
-		background: #0f172a; /* Explicit dark slate background for white text */
-		background: rgba(15, 23, 42, 0.95);
-		backdrop-filter: blur(4px);
-		border: 1px solid rgba(51, 65, 85, 0.5);
-		padding: 8px 10px;
-		border-radius: 6px;
-		color: #f8fafc; /* Safe white text color */
-		font-family: 'Inter', sans-serif;
-		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-	}
-
-	.sv-header {
-		font-weight: 700;
-		color: #94a3b8;
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		font-size: 8px;
-		margin-bottom: 6px;
-		border-bottom: 1px solid rgba(51, 65, 85, 0.5);
-		padding-bottom: 4px;
-	}
-
-	.sv-data {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 8px;
-		margin-bottom: 2px;
-	}
-
-	.sv-label {
-		color: #64748b;
-		font-weight: 500;
-		font-size: 9px;
-	}
-
-	.sv-val {
-		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-		font-weight: 700;
-		font-size: 10px;
-	}
-
-	.sv-val.mag {
-		color: #38bdf8;
-	}
-
-	.sv-val.angle {
-		color: #10b981;
 	}
 </style>

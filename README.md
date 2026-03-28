@@ -1,6 +1,8 @@
 # StepVista Core (`@stepvista/core`)
 
 > **High-performance interactive physics simulation engine for browser-based learning.**
+>
+> 🚀 **See it in action:** [lab.stepvista.com](https://lab.stepvista.com)
 
 StepVista Core is a library of open-source components designed to transform static educational content into active, discovery-based experiences. It provides the fundamental building blocks for creating high-fidelity physics simulations that run smoothly in low-bandwidth environments.
 
@@ -16,7 +18,7 @@ This library is built on the principle of **Guided Discovery**:
 - **Framework:** [Svelte 5](https://svelte.dev/) (utilizing Runes for reactive state management).
 - **Rendering:** Resolution-independent SVG.
 - **Styling:** Tailwind CSS.
-- **Math:** Custom `physics-engine` with high-precision snapping and decimal formatting for laboratory records.
+- **Math:** KaTeX for LaTeX rendering and a custom `physics-engine` with 3D support, high-precision snapping, and decimal formatting.
 
 ## 📦 Components
 
@@ -24,7 +26,9 @@ This library is built on the principle of **Guided Discovery**:
 | :--- | :--- |
 | `SV-Grid` | A responsive Cartesian coordinate system with snappable grid lines. |
 | `SV-Vector` | Draggable arrows with real-time magnitude and angular calculation. |
-| `Physics-Engine` | High-precision utilities for vector operations and kinematics. |
+| `MathView` | A live LaTeX calculator that interpolates template strings with dynamic values. |
+| `ZDirectionIndicator` | Renders textbook-standard symbols for Z-axis orientation (⊙ and ⊗). |
+| `Physics-Engine` | High-precision utilities for 3D vector operations, cross products, and 2.5D projections. |
 
 ## 🚀 Installation
 
