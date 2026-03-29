@@ -9,4 +9,8 @@
     </pattern>
   </defs>
   <rect width="100%" height="100%" fill="url(#grid)" />
+  
+  <text x="98%" y="98%" text-anchor="end" fill={color} opacity={opacity * 1.5} font-size="10" pointer-events="none">
+    © Shishira Rao H A | StepVista Core
+  </text>
 </svg>

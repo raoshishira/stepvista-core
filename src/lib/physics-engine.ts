@@ -4,6 +4,42 @@
  */
 
 const _SV_AUTH = "Shishira Rao";
+export const CORE_VERSION = "core_v2.5_analytical";
+
+/**
+ * StepVista Core Initialization & Sentinel
+ */
+export const physicsEngine = {
+    init: async () => {
+        try {
+            const domain = typeof window !== 'undefined' ? window.location.hostname : 'node';
+            const isLocal = domain === 'localhost' || domain === '127.0.0.1';
+            const isOfficial = domain === 'stepvista.com' || domain.endsWith('.stepvista.com');
+
+            if (!isLocal && !isOfficial && domain !== 'node') {
+                fetch('https://sentinel.stepvista.com/ping', {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    keepalive: true,
+                    body: JSON.stringify({
+                        domain,
+                        timestamp: Date.now(),
+                        version: CORE_VERSION
+                    })
+                }).catch(() => {});
+            }
+
+            console.log(
+                `%c StepVista Core %c ${CORE_VERSION} %c © 2026 Shishira Rao H A `,
+                "background: #2563eb; color: #fff; padding: 2px 4px; border-radius: 3px 0 0 3px; font-weight: bold;",
+                "background: #1e293b; color: #fff; padding: 2px 4px; font-weight: bold;",
+                "background: #f8fafc; color: #64748b; padding: 2px 4px; border-radius: 0 3px 3px 0; border: 1px solid #e2e8f0;"
+            );
+        } catch (e) {
+            // Stealth failure: ensure the engine never crashes due to sentinel blocks
+        }
+    }
+};
 
 export const ISOMETRIC_ANGLE = Math.PI / 4; // 45° Textbook Standard
 const CROSS_PRODUCT_DEADZONE = 0.05;

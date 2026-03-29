@@ -1,4 +1,5 @@
 # StepVista Core (`@stepvista/core`)
+**Copyright (c) 2026 Shishira Rao H A**
 
 > **High-performance interactive physics simulation engine for browser-based learning.**
 >
@@ -38,9 +39,9 @@ npm install @stepvista/core
 
 ## ⚖️ Licensing
 
-Licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. 
+Licensed under the **Creative Commons Attribution 4.0 International (CC BY 4.0)**.
 
-If you use this engine to build public educational tools, the AGPL requires that you share your source code with the community. 
+Allows anyone to share, adapt, and use the engine commercially, provided that **appropriate credit (Attribution)** is given to **Shishira Rao H A** and a link to the original license is provided.
 
 ---
 
