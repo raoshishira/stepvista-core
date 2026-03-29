@@ -1,4 +1,4 @@
-# StepVista Core (`@stepvista/core`)
+# StepVista Core V1.0.0 (`@stepvista/core`)
 **Copyright (c) 2026 Shishira Rao H A**
 
 > **High-performance interactive physics simulation engine for browser-based learning.**
